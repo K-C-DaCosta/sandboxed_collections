@@ -30,6 +30,15 @@ where
 }
 
 impl<T> RingBuffer<T> {
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    pub fn clear(&mut self) {
+        self.len = 0;
+        self.pointers = [0; 2];
+    }
+
     pub fn is_empty(&self) -> bool {
         self.len <= 0
     }
@@ -116,11 +125,11 @@ impl<T> RingBuffer<T> {
 
 impl<T> RingBuffer<Vec<T>>
 where
-    T: Sized + Default,
+    T: Sized + Default + Clone,
 {
     pub fn with_capacity(mut self, cap: usize) -> Self {
         self.cap = cap;
-        self.memory = (0..cap).map(|_| T::default()).collect();
+        self.memory.resize(cap,T::default());
         self
     }
 
