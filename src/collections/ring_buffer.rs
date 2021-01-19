@@ -56,8 +56,8 @@ impl<T> RingBuffer<T> {
     }
 
     /// # Description
-    /// pops the rear and returns the index to the popped item 
-    /// # Returns 
+    /// pops the rear and returns the index to the popped item
+    /// # Returns
     /// `None` is pop fails
     pub fn pop_rear(&mut self) -> Option<usize> {
         if self.is_empty() {
@@ -69,10 +69,10 @@ impl<T> RingBuffer<T> {
         }
     }
 
-    /// # Description 
+    /// # Description
     /// This generalization of enqueue/dequeue operation
-    /// I noticed that both enqueue and dequeue are extremely similar so i merged the operations into one 
-    /// function here 
+    /// I noticed that both enqueue and dequeue are extremely similar so i merged the operations into one
+    /// function here
     fn increment_pointer<CB>(
         &mut self,
         has_no_space: CB,
@@ -116,8 +116,14 @@ impl<T> RingBuffer<T> {
 
 impl<T> RingBuffer<Vec<T>>
 where
-    T: Sized + 'static,
+    T: Sized + Default,
 {
+    pub fn with_capacity(mut self, cap: usize) -> Self {
+        self.cap = cap;
+        self.memory = (0..cap).map(|_| T::default()).collect();
+        self
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.index_iter().map(move |i| &self.memory[i])
     }
@@ -151,6 +157,19 @@ impl<T> ops::IndexMut<Option<usize>> for RingBuffer<Vec<T>> {
             .map(move |a| self.memory.get_mut(a))
             .flatten()
             .unwrap()
+    }
+}
+
+impl<T> ops::Index<usize> for RingBuffer<Vec<T>> {
+    type Output = T;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.memory[index]
+    }
+}
+
+impl<T> ops::IndexMut<usize> for RingBuffer<Vec<T>> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.memory[index]
     }
 }
 
