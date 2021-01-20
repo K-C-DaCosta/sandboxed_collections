@@ -43,7 +43,7 @@ where
             memory: Vec::new(),
         }
     }
-    /// # Description 
+    /// # Description
     /// Allocates a node and returns a `Pointer` to it
     pub fn allocate(&mut self, val: T) -> Pointer {
         if self.pool == NULL {
@@ -94,13 +94,13 @@ where
     /// - max_results - specify maximum number of results we wish to collect
     /// # Returns
     /// A vec of pointers satifying `predicate`
-    pub fn search_all<CB>(&self, predicate: CB, max_results: usize) -> Vec<Pointer>
+    pub fn search_all<CB>(&self, max_results: usize, predicate: CB) -> Vec<Pointer>
     where
         CB: Fn(&NaryNode<T>) -> bool + Copy,
     {
         let mut results = Vec::new();
         for &root_ptr in self.root_list.iter() {
-            self.search_and_collect(predicate, root_ptr, &mut results, max_results)
+            self.search_and_collect(root_ptr, &mut results, max_results, predicate)
         }
         results
     }
@@ -109,27 +109,29 @@ where
     /// Same as `search_all(..)` but now search is from an arbitrary `root`
     pub fn search_and_collect<CB>(
         &self,
-        predicate: CB,
         root: Pointer,
         results: &mut Vec<Pointer>,
         max_results: usize,
+        predicate: CB,
     ) where
         CB: Fn(&NaryNode<T>) -> bool + Copy,
     {
         if root == NULL || results.len() >= max_results {
             return;
         }
+
         if predicate(&self[root]) {
             results.push(root);
         }
+
         for &child_ptr in self[root].children.iter() {
-            self.search_and_collect(predicate, child_ptr, results, max_results);
+            self.search_and_collect(child_ptr, results, max_results, predicate);
         }
     }
 
     /// # Description
     /// Searches from a `root` and returns pointer to the first item that satifyies `predicate`
-    pub fn search<CB>(&self, predicate: CB, root: Pointer) -> Option<Pointer>
+    pub fn search<CB>(&self, root: Pointer, predicate: CB) -> Option<Pointer>
     where
         CB: Fn(&NaryNode<T>) -> bool + Copy,
     {
@@ -142,7 +144,7 @@ where
         }
 
         for &child_ptr in self[root].children.iter() {
-            let res = self.search(predicate, child_ptr);
+            let res = self.search(child_ptr, predicate);
             if res.is_some() {
                 return res;
             }
