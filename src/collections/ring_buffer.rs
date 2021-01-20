@@ -136,6 +136,10 @@ impl<T> RingBuffer<Vec<T>>
 where
     T: Sized + Default + Clone,
 {
+    /// # Description
+    /// Sets ring buffers capacity to `cap`
+    /// # Comments
+    /// Calling this may result in an allocation
     pub fn with_capacity(mut self, cap: usize) -> Self {
         self.capacity = cap;
         self.memory.resize(cap, T::default());
@@ -151,7 +155,7 @@ where
             .map(move |i| unsafe { &mut *self.memory.as_mut_ptr().offset(i as isize) })
     }
 }
-///# Description
+/// # Description
 /// Use this enum create and initalize ring buffers to various sizes
 pub enum RingSpecifier<Memory> {
     /// # Description

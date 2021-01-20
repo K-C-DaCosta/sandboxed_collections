@@ -1,11 +1,12 @@
-static NULL: u32 = !0;
-type Ptr = u32;
+type Pointer = u32;
+static NULL: Pointer = !0;
 use std::ops::{Index, IndexMut};
 
+#[derive(Clone)]
 pub struct NaryNode<T> {
-    pub parent: Ptr,
+    pub parent: Pointer,
     pub data: Option<T>,
-    pub children: Vec<Ptr>,
+    pub children: Vec<Pointer>,
 }
 
 impl<T> NaryNode<T> {
@@ -23,9 +24,10 @@ impl<T> NaryNode<T> {
 }
 
 ///Custom N-ary Tree implemented with vector-backed memory
+#[derive(Clone)]
 pub struct NaryForest<T> {
-    pub root_list: Vec<Ptr>,
-    pub pool: Ptr,
+    pub root_list: Vec<Pointer>,
+    pub pool: Pointer,
     pub memory: Vec<NaryNode<T>>,
 }
 
@@ -40,7 +42,7 @@ where
             memory: Vec::new(),
         }
     }
-    pub fn allocate(&mut self, val: T) -> Ptr {
+    pub fn allocate(&mut self, val: T) -> Pointer {
         if self.pool == NULL {
             self.memory.push(NaryNode::new().with_data(val));
             (self.memory.len() - 1) as u32
@@ -53,7 +55,7 @@ where
     }
     
     #[allow(dead_code)]
-    pub fn free(&mut self, node: Ptr) {
+    pub fn free(&mut self, node: Pointer) {
         if node == NULL {
             return;
         }
@@ -66,7 +68,7 @@ where
     }
 
     #[allow(dead_code)]
-    pub fn allocate_node(&mut self, node: NaryNode<T>) -> Ptr {
+    pub fn allocate_node(&mut self, node: NaryNode<T>) -> Pointer {
         if self.pool == NULL {
             self.memory.push(node);
             (self.memory.len() - 1) as u32
@@ -77,7 +79,7 @@ where
             pool_node
         }
     }
-    pub fn add_child(&mut self, parent: Ptr, child: Ptr) {
+    pub fn add_child(&mut self, parent: Pointer, child: Pointer) {
         self[parent].children.push(child);
         self[child].parent = parent;
     }
