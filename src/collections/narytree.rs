@@ -40,8 +40,8 @@ pub struct NaryTree<T> {
 
 impl<T> NaryTree<T> {
     /// # Description
-    /// -initalizes a N-ary tree
-    /// -new() does no allocation
+    /// - initalizes a N-ary tree
+    /// - new() does no allocation
     pub fn new() -> Self {
         Self {
             root: NULL,

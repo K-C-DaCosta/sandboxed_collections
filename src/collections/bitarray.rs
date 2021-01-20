@@ -38,7 +38,7 @@ impl BitArray {
     }
 
     /// # Description 
-    ///gets bit *at* index and returns either 0 or 1
+    /// gets bit *at* index and returns either 0 or 1
     pub fn get_bit(&self, index: u128) -> u32 {
         let block_index = (index / 32) as usize;
         let block_bit_index = (index % 32) as u32;
@@ -47,7 +47,7 @@ impl BitArray {
     }
     
     /// # Description 
-    ///sets bit of value `bit` *at* `index`  
+    /// sets bit of value `bit` *at* `index`  
     pub fn set_bit(&mut self, index: u128, bit: u32) {
         let set_mask = (bit & 1) * (!0);
 

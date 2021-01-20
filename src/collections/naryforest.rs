@@ -43,6 +43,8 @@ where
             memory: Vec::new(),
         }
     }
+    /// # Description 
+    /// Allocates a node and returns a `Pointer` to it
     pub fn allocate(&mut self, val: T) -> Pointer {
         if self.pool == NULL {
             self.memory.push(NaryNode::new().with_data(val));

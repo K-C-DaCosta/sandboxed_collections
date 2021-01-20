@@ -27,6 +27,7 @@ where
             cache_size,
         }
     }
+    
     /// # Description
     /// Puts a `key`-`value` pair into the `LruCache`
     /// # Comments
