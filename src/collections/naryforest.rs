@@ -23,6 +23,7 @@ impl<T> NaryNode<T> {
     }
 }
 
+
 ///Custom N-ary Tree implemented with vector-backed memory
 #[derive(Clone)]
 pub struct NaryForest<T> {
