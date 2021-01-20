@@ -24,7 +24,6 @@ impl<T> NaryNode<T> {
     }
 }
 
-
 ///Custom N-ary Tree implemented with vector-backed memory
 #[derive(Clone)]
 pub struct NaryForest<T> {
@@ -55,8 +54,7 @@ where
             pool_node
         }
     }
-    
-    #[allow(dead_code)]
+
     pub fn free(&mut self, node: Pointer) {
         if node == NULL {
             return;
@@ -69,7 +67,6 @@ where
         self.pool = node;
     }
 
-    #[allow(dead_code)]
     pub fn allocate_node(&mut self, node: NaryNode<T>) -> Pointer {
         if self.pool == NULL {
             self.memory.push(node);
@@ -81,9 +78,75 @@ where
             pool_node
         }
     }
+
     pub fn add_child(&mut self, parent: Pointer, child: Pointer) {
         self[parent].children.push(child);
         self[child].parent = parent;
+    }
+
+    /// # Description
+    /// Searches through all trees in the forest and returns a list of pointers that
+    /// satify `predicate`.
+    /// # Parameters
+    /// - predicate - use this to specify search criteria
+    /// - max_results - specify maximum number of results we wish to collect
+    /// # Returns
+    /// A vec of pointers satifying `predicate`
+    pub fn search_all<CB>(&self, predicate: CB, max_results: usize) -> Vec<Pointer>
+    where
+        CB: Fn(&NaryNode<T>) -> bool + Copy,
+    {
+        let mut results = Vec::new();
+        for &root_ptr in self.root_list.iter() {
+            self.search_and_collect(predicate, root_ptr, &mut results, max_results)
+        }
+        results
+    }
+
+    /// # Description
+    /// Same as `search_all(..)` but now search is from an arbitrary `root`
+    pub fn search_and_collect<CB>(
+        &self,
+        predicate: CB,
+        root: Pointer,
+        results: &mut Vec<Pointer>,
+        max_results: usize,
+    ) where
+        CB: Fn(&NaryNode<T>) -> bool + Copy,
+    {
+        if root == NULL || results.len() >= max_results {
+            return;
+        }
+        if predicate(&self[root]) {
+            results.push(root);
+        }
+        for &child_ptr in self[root].children.iter() {
+            self.search_and_collect(predicate, child_ptr, results, max_results);
+        }
+    }
+
+    /// # Description
+    /// Searches from a `root` and returns pointer to the first item that satifyies `predicate`
+    pub fn search<CB>(&self, predicate: CB, root: Pointer) -> Option<Pointer>
+    where
+        CB: Fn(&NaryNode<T>) -> bool + Copy,
+    {
+        if root == NULL {
+            return None;
+        }
+
+        if predicate(&self[root]) {
+            return Some(root);
+        }
+
+        for &child_ptr in self[root].children.iter() {
+            let res = self.search(predicate, child_ptr);
+            if res.is_some() {
+                return res;
+            }
+        }
+
+        None
     }
 }
 
