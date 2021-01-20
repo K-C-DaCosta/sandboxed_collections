@@ -5,7 +5,7 @@ use std::{ops, usize};
 
 struct IncrementQuery {
     old_ptr: usize,
-    cur_ptr: usize,
+    _cur_ptr: usize,
 }
 /// # Descirption
 /// A fixed-capacity ring buffer
@@ -108,7 +108,7 @@ impl<T> RingBuffer<T> {
             self.len = ((self.len as isize) + len_inc_dec) as usize;
             Some(IncrementQuery {
                 old_ptr,
-                cur_ptr: self.pointers[pointer_type],
+                _cur_ptr: self.pointers[pointer_type],
             })
         }
     }
