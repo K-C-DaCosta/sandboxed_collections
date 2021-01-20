@@ -1,5 +1,6 @@
 pub type Pointer = u32;
-static NULL: Pointer = !0;
+pub static NULL: Pointer = !0;
+
 use std::ops::{Index, IndexMut};
 
 #[derive(Clone)]
