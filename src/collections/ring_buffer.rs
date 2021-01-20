@@ -1,16 +1,17 @@
 pub const FRONT: usize = 0;
 pub const REAR: usize = 1;
 
-use std::ops;
+use std::{ops, usize};
 
 struct IncrementQuery {
     old_ptr: usize,
     cur_ptr: usize,
 }
-
+/// # Descirption
+/// A fixed-capacity ring buffer
 pub struct RingBuffer<Memory> {
     len: usize,
-    cap: usize,
+    capacity: usize,
     pointers: [usize; 2],
     memory: Memory,
 }
@@ -22,7 +23,7 @@ where
     pub fn new() -> Self {
         Self {
             len: 0,
-            cap: 0,
+            capacity: 0,
             pointers: [0; 2],
             memory: T::default(),
         }
@@ -44,7 +45,15 @@ impl<T> RingBuffer<T> {
     }
 
     pub fn is_full(&self) -> bool {
-        self.len >= self.cap
+        self.len >= self.capacity
+    }
+
+    pub fn front(&self) -> usize {
+        self.pointers[FRONT]
+    }
+
+    pub fn rear(&self) -> usize {
+        self.pointers[REAR]
     }
 
     /// # Description
@@ -53,7 +62,7 @@ impl<T> RingBuffer<T> {
     ///  None if enqueue fails
     pub fn enqueue(&mut self) -> Option<usize> {
         self.increment_pointer(|rb| rb.is_full(), REAR, 1)
-            .map(|IncrementQuery { cur_ptr, .. }| cur_ptr)
+            .map(|IncrementQuery { old_ptr, .. }| old_ptr)
     }
     /// # Description
     /// deques item and retuns location of recently dequed item  
@@ -72,7 +81,7 @@ impl<T> RingBuffer<T> {
         if self.is_empty() {
             None
         } else {
-            self.pointers[REAR] = (self.pointers[REAR] + self.cap - 1) % self.cap;
+            self.pointers[REAR] = (self.pointers[REAR] + self.capacity - 1) % self.capacity;
             self.len -= 1;
             Some(self.pointers[REAR])
         }
@@ -95,7 +104,7 @@ impl<T> RingBuffer<T> {
             None
         } else {
             let old_ptr = self.pointers[pointer_type];
-            self.pointers[pointer_type] = (self.pointers[pointer_type] + 1) % self.cap;
+            self.pointers[pointer_type] = (self.pointers[pointer_type] + 1) % self.capacity;
             self.len = ((self.len as isize) + len_inc_dec) as usize;
             Some(IncrementQuery {
                 old_ptr,
@@ -110,14 +119,14 @@ impl<T> RingBuffer<T> {
         if self.len <= 1 {
             None
         } else {
-            Some((self.pointers[FRONT] + 1) % self.cap)
+            Some((self.pointers[FRONT] + 1) % self.capacity)
         }
     }
 
     fn index_iter(&self) -> RingIter {
         RingIter {
             cur: self.pointers[FRONT],
-            cap: self.cap,
+            cap: self.capacity,
             len: self.len,
         }
     }
@@ -128,8 +137,8 @@ where
     T: Sized + Default + Clone,
 {
     pub fn with_capacity(mut self, cap: usize) -> Self {
-        self.cap = cap;
-        self.memory.resize(cap,T::default());
+        self.capacity = cap;
+        self.memory.resize(cap, T::default());
         self
     }
 
@@ -142,14 +151,39 @@ where
             .map(move |i| unsafe { &mut *self.memory.as_mut_ptr().offset(i as isize) })
     }
 }
+///# Description
+/// Use this enum create and initalize ring buffers to various sizes
+pub enum RingSpecifier<Memory> {
+    /// # Description
+    /// used to create and empty queue with the `Memory`'s length being the capacity
+    /// # Comments
+    /// basically it enqueues nothing in the vector and the capacity of the ring
+    /// comes from the vector's current length
+    MakeEmpty(Memory),
 
-impl<T> From<Vec<T>> for RingBuffer<Vec<T>> {
-    fn from(list: Vec<T>) -> Self {
-        Self {
-            pointers: [0, 0],
-            len: list.len(),
-            cap: list.len(),
-            memory: list,
+    /// # Description
+    /// used to create and empty queue with the `Memory`'s length being the capacity.
+    /// # Comments
+    /// basically it enqueues everything in the `Memory` and the capacity of the ring
+    /// comes from the `Memory`'s current length
+    MakeFull(Memory),
+}
+
+impl<T> From<RingSpecifier<Vec<T>>> for RingBuffer<Vec<T>> {
+    fn from(spec: RingSpecifier<Vec<T>>) -> Self {
+        match spec {
+            RingSpecifier::MakeEmpty(mem) => Self {
+                len: 0,
+                pointers: [0, 0],
+                capacity: mem.len(),
+                memory: mem,
+            },
+            RingSpecifier::MakeFull(mem) => Self {
+                len: mem.len(),
+                pointers: [0, 0],
+                capacity: mem.len(),
+                memory: mem,
+            },
         }
     }
 }
@@ -210,15 +244,15 @@ fn ring_buffer_base_cases() {
     assert_eq!(rb.is_empty(), true);
     assert_eq!(rb.is_full(), true);
 
-    let rb = RingBuffer::from(vec![0]);
+    let rb = RingBuffer::from(RingSpecifier::MakeFull(vec![0]));
     assert_eq!(rb.iter().map(|&a| a).collect::<Vec<_>>(), vec![0]);
     assert_eq!(rb.is_empty(), false);
     assert_eq!(rb.is_full(), true);
 }
 
 #[test]
-fn ring_buffer_enq_deq_tests() {
-    let mut rb = RingBuffer::from(vec![1, 2, 3, 4, 5, 6, 7]);
+fn ring_buffer_deq_tests() {
+    let mut rb = RingBuffer::from(RingSpecifier::MakeFull(vec![1, 2, 3, 4, 5, 6, 7]));
 
     assert_eq!(rb.is_empty(), false);
     assert_eq!(rb.is_full(), true);
@@ -250,4 +284,52 @@ fn ring_buffer_enq_deq_tests() {
     assert_eq!(rb.is_empty(), false);
     assert_eq!(rb.is_full(), false);
     assert_eq!(rb.iter().map(|&a| a).collect::<Vec<_>>(), vec![3, 4, 5, 6]);
+}
+
+#[test]
+fn ring_buffer_enq_tests() {
+    let mut rb = RingBuffer::from(RingSpecifier::MakeEmpty(vec![1, 2, 3, 4]));
+
+    assert_eq!(rb.is_empty(), true);
+    assert_eq!(rb.is_full(), false);
+    assert_eq!(rb.iter().map(|&a| a).collect::<Vec<_>>(), vec![]);
+
+    let idx = rb.enqueue();
+    rb[idx] = -1;
+    assert_eq!(rb.is_empty(), false);
+    assert_eq!(rb.is_full(), false);
+    assert_eq!(rb.iter().map(|&a| a).collect::<Vec<_>>(), vec![-1]);
+
+    let idx = rb.enqueue();
+    rb[idx] = -2;
+    assert_eq!(rb.is_empty(), false);
+    assert_eq!(rb.is_full(), false);
+    assert_eq!(rb.iter().map(|&a| a).collect::<Vec<_>>(), vec![-1, -2]);
+
+    let idx = rb.enqueue();
+    rb[idx] = -3;
+    assert_eq!(rb.is_empty(), false);
+    assert_eq!(rb.is_full(), false);
+    assert_eq!(rb.iter().map(|&a| a).collect::<Vec<_>>(), vec![-1, -2, -3]);
+
+    let idx = rb.enqueue();
+    rb[idx] = -4;
+    assert_eq!(rb.is_empty(), false);
+    assert_eq!(rb.is_full(), true);
+    assert_eq!(
+        rb.iter().map(|&a| a).collect::<Vec<_>>(),
+        vec![-1, -2, -3, -4]
+    );
+
+    let idx = rb.dequeue();
+    assert_eq!(rb[idx], -1);
+    assert_eq!(rb.is_empty(), false);
+    assert_eq!(rb.is_full(), false);
+    assert_eq!(rb.len(), 3);
+    assert_eq!(rb.iter().map(|&a| a).collect::<Vec<_>>(), vec![-2, -3, -4]);
+
+    let front = rb.front();
+    let next_idx = rb.peek_next();
+    assert_eq!(rb[front], -2);
+    assert_eq!(rb[next_idx], -3);
 }

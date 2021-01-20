@@ -12,6 +12,8 @@ impl BitArray {
             len: 0,
         }
     }
+
+    /// # Description
     /// attemps to allocate approximately `num_bits` bits. You will ofeten get slightly more bits than requested.
     /// new bits will be set to `bit`. If `num_bits` bits is already allocated, then this function does nothing.
     pub fn allocate(&mut self, num_bits: u128, bit: u32) {
@@ -23,17 +25,19 @@ impl BitArray {
         }
         self.len = num_bits;
     }
-
+    /// # Description 
     /// returns number of bits available
     pub fn len(&self) -> u128 {
         self.len
     }
 
+    /// # Description 
     /// returns number of bits available
     pub fn available_bits(&self) -> u128 {
         self.blocks.len() as u128 * 32
     }
 
+    /// # Description 
     ///gets bit *at* index and returns either 0 or 1
     pub fn get_bit(&self, index: u128) -> u32 {
         let block_index = (index / 32) as usize;
@@ -41,7 +45,8 @@ impl BitArray {
         let bit_block = self.blocks[block_index];
         (bit_block >> block_bit_index) & 1
     }
-
+    
+    /// # Description 
     ///sets bit of value `bit` *at* `index`  
     pub fn set_bit(&mut self, index: u128, bit: u32) {
         let set_mask = (bit & 1) * (!0);
