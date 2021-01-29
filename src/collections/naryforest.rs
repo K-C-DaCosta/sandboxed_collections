@@ -3,6 +3,8 @@ pub static NULL: Pointer = !0;
 
 use std::ops::{Index, IndexMut};
 
+pub struct CannotInsert;
+
 #[derive(Clone)]
 pub struct NaryNode<T> {
     pub parent: Pointer,
@@ -81,9 +83,23 @@ where
         }
     }
 
+    /// # Description 
+    /// Adds a `child` node to the `parent`
     pub fn add_child(&mut self, parent: Pointer, child: Pointer) {
         self[parent].children.push(child);
         self[child].parent = parent;
+    }
+
+    /// # Description 
+    /// Adds a `child` node to the `parent` node at location `index` within the `parent` node 
+    pub fn add_child_at(&mut self, parent:Pointer, child:Pointer,index:usize)->Result<(),CannotInsert> {
+        if index > self[parent].children.len(){
+            return Err(CannotInsert)
+        }
+
+        self[parent].children.insert(index, child);
+        self[child].parent = parent;
+        Ok(())
     }
 
     /// # Description
