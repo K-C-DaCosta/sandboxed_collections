@@ -26,9 +26,12 @@ impl<T> NaryNode<T> {
     }
 }
 
-///Custom N-ary Tree implemented with vector-backed memory
+/// # Description 
+/// Custom N-ary Forest implemented with vector-backed memory. 
+/// This ADT can have multiple trees living inside of it
 #[derive(Clone)]
 pub struct NaryForest<T> {
+    /// list of roots for every tree in collection 
     pub root_list: Vec<Pointer>,
     pub pool: Pointer,
     pub memory: Vec<NaryNode<T>>,
